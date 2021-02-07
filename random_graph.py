@@ -17,7 +17,7 @@ def wilson(n: int, seed=None) -> tuple[int, list[bool]]:
         random.seed(seed)
 
     if n <= 0:
-        raise ValueError(f'Graph must have al least one node, but {n} was given.')
+        raise ValueError(f"Graph must have al least one node, but {n} was given.")
 
     visited = [False] * n
     path = [0] * n
@@ -75,7 +75,7 @@ def random_edges(edges: list[bool], m=1, seed=None) -> list[bool]:
         random.seed(seed)
 
     if not edges:
-        raise ValueError('Empty list of edges.')
+        raise ValueError("Empty list of edges.")
 
     if all(edges):
         return edges
@@ -101,14 +101,18 @@ def random_graph(n: int, m: int, seed=None) -> tuple[int, list[bool]]:
     :return: root node, list of edges of created graph
     """
     if m < n - 1:
-        raise ValueError(f'Impossible to create arborescence for {n} nodes with number of edges smaller then {n - 1}, '
-                         f'but {m} was given.')
+        raise ValueError(
+            f"Impossible to create arborescence for {n} nodes with number of edges smaller then {n - 1}, "
+            f"but {m} was given."
+        )
 
     if m > n ** 2:
-        raise ValueError(f'Complete directed graph could contain at most {n ** 2} edges, but {m} was given.')
+        raise ValueError(
+            f"Complete directed graph could contain at most {n ** 2} edges, but {m} was given."
+        )
 
     root, edges = wilson(n, seed=seed)
-    m -= (n - 1)
+    m -= n - 1
     edges = random_edges(edges, m=m, seed=seed)
 
     return root, edges

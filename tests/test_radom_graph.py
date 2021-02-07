@@ -5,13 +5,16 @@ from random_graph import wilson, random_graph, random_edges
 
 
 class TestRandomEdges:
-
     @given(edges=st.lists(st.booleans(), min_size=1), m=st.integers(min_value=0))
     def test_random_edges(self, edges, m):
         modified_edges = random_edges(edges, m=m)
         # only adding edges
-        assert all([((edge == modified_edge) or ((not edge) and modified_edge))
-                    for edge, modified_edge in zip(edges, modified_edges)])
+        assert all(
+            [
+                ((edge == modified_edge) or ((not edge) and modified_edge))
+                for edge, modified_edge in zip(edges, modified_edges)
+            ]
+        )
         # add m new edges or reach maximum number of edges
         assert (sum(edges) + m == sum(modified_edges)) or all(modified_edges)
 
@@ -41,7 +44,9 @@ class TestWilson:
         while stack:
             current_node = stack.pop()
             visited.append(current_node)
-            current_node_edges = edges[current_node * nodes: (current_node + 1) * nodes]
+            current_node_edges = edges[
+                current_node * nodes : (current_node + 1) * nodes
+            ]
             for i, edge in enumerate(current_node_edges):
                 if edge and i not in visited:
                     stack.append(i)
@@ -59,14 +64,18 @@ class TestRandomGraph:
     @given(data=st.data())
     def test_number_of_nodes(self, data):
         n = data.draw(self.nodes, label="Number of nodes")
-        m = data.draw(st.integers(min_value=(n - 1), max_value=(n ** 2)), label="Number of edges")
+        m = data.draw(
+            st.integers(min_value=(n - 1), max_value=(n ** 2)), label="Number of edges"
+        )
         _, edges = random_graph(n, m)
         assert len(edges) == n ** 2
 
     @given(data=st.data())
     def test_number_of_edges(self, data):
         n = data.draw(self.nodes, label="Number of nodes")
-        m = data.draw(st.integers(min_value=(n - 1), max_value=(n ** 2)), label="Number of edges")
+        m = data.draw(
+            st.integers(min_value=(n - 1), max_value=(n ** 2)), label="Number of edges"
+        )
         _, edges = random_graph(n, m)
         assert sum(edges) == m
 

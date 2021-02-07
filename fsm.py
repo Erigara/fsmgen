@@ -1,7 +1,6 @@
 import random
 import hashlib
 from collections import defaultdict
-
 from graphviz import Digraph
 
 from random_graph import random_graph
@@ -29,7 +28,10 @@ class FSM:
         self.inner_state = self.init_state
 
     def tick(self, inp):
-        if inp in self.transition[self.inner_state] and inp in self.emit[self.inner_state]:
+        if (
+            inp in self.transition[self.inner_state]
+            and inp in self.emit[self.inner_state]
+        ):
             out = self.emit[self.inner_state][inp]
             state = self.transition[self.inner_state][inp]
             self.inner_state = state
@@ -78,16 +80,14 @@ def fsm2graph(fsm: FSM) -> Digraph:
 
     for state in fsm.states:
         dot.node(
-            f'{hash_state(state)}', label=f'{state}',
-            shape="circle" if state != fsm.init_state else "doublecircle"
+            f"{hash_state(state)}",
+            label=f"{state}",
+            shape="circle" if state != fsm.init_state else "doublecircle",
         )
 
     for frm in fsm.states:
         for inp in fsm.transition[frm]:
             to = fsm.transition[frm][inp]
             out = fsm.emit[frm][inp]
-            dot.edge(
-                f'{hash_state(frm)}', f'{hash_state(to)}',
-                label=f'{inp}/{out}'
-            )
+            dot.edge(f"{hash_state(frm)}", f"{hash_state(to)}", label=f"{inp}/{out}")
     return dot
