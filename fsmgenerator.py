@@ -15,7 +15,7 @@ G = TypeVar("G")
 P = TypeVar("P")
 
 
-class FSM(Generic[S, T, P]):
+class FiniteStateMachine(Generic[S, T, P]):
     def __init__(
         self,
         init_state: S,
@@ -46,7 +46,9 @@ class FSM(Generic[S, T, P]):
         return output
 
 
-def generate(states: list[S], inputs: list[T], outputs: list[G], seed=None) -> FSM:
+def generate(
+    states: list[S], inputs: list[T], outputs: list[G], seed=None
+) -> FiniteStateMachine:
     """
     Generate random finite state machine.
 
@@ -85,10 +87,10 @@ def generate(states: list[S], inputs: list[T], outputs: list[G], seed=None) -> F
                 transition[frm][frm_inputs[j]] = to
                 emit[frm][frm_inputs[j]] = frm_outputs[j]
 
-    return FSM(init_state, states, inputs, outputs, transition, emit)
+    return FiniteStateMachine(init_state, states, inputs, outputs, transition, emit)
 
 
-def fsm2graph(fsm: FSM) -> Digraph:
+def fsm2graph(fsm: FiniteStateMachine) -> Digraph:
     """
     Transform finite state machine to directer graph for next visualization
 

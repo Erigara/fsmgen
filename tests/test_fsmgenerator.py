@@ -9,7 +9,7 @@ from hypothesis.stateful import (
 )
 from hypothesis.strategies import composite
 
-from fsm import generate
+from fsmgenerator import generate
 
 
 @composite
@@ -41,9 +41,9 @@ def test_generate_equal(data, seed):
     assert fsm1.emit == fsm2.emit
 
 
-class GeneratedStateMachine(RuleBasedStateMachine):
+class GeneratedFiniteStateMachine(RuleBasedStateMachine):
     """
-    Testing correctness of FSM.
+    Testing correctness of finite state machine.
     """
 
     outs = Bundle("outs")
@@ -68,30 +68,4 @@ class GeneratedStateMachine(RuleBasedStateMachine):
         assert self.fsm.state in self.states
 
 
-class StateMachine(RuleBasedStateMachine):
-    states = "ABCD"
-    inputs = [0, 1, 2, 3]
-    outputs = [0, 1, 2, 3]
-
-    outs = Bundle("outs")
-
-    @initialize()
-    def setup(self, seed):
-        self.concrete_fsm = generate(self.states, self.inputs, self.outputs, seed=seed)
-        self.reference_fsm = generate(self.states, self.inputs, self.outputs, seed=seed)
-        self.reference_fsm.transition["B"] = {}
-        self.reference_fsm.emit["B"] = {}
-
-    @rule(target=outs, input=st.sampled_from(inputs))
-    def tick(self, input):
-        concrete_output = self.concrete_fsm.tick(input)
-        reference_output = self.reference_fsm.tick(input)
-        return reference_output, concrete_output
-
-    @rule(outs=outs)
-    def check_output(self, outs):
-        reference_output, concrete_output = outs
-        assert reference_output == concrete_output
-
-
-TestStateMachine = GeneratedStateMachine.TestCase
+TestStateMachine = GeneratedFiniteStateMachine.TestCase
