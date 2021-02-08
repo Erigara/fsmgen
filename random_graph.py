@@ -98,7 +98,7 @@ def random_graph(n: int, m: int, seed=None) -> tuple[int, list[bool]]:
     :param seed: seed
     :param n: number of nodes
     :param m: number of edges
-    :return: root node, list of edges of created graph
+    :returns: root node, list of edges of created graph
     """
     if m < n - 1:
         raise ValueError(

@@ -1,13 +1,30 @@
-import random
 import hashlib
+import random
 from collections import defaultdict
+from collections.abc import Callable
+from typing import TypeVar, Optional, Generic
+
 from graphviz import Digraph
 
 from random_graph import random_graph
 
 
-class FSM:
-    def __init__(self, init_state, states, inputs, outputs, transition, emit):
+S = TypeVar("S")
+T = TypeVar("T")
+G = TypeVar("G")
+P = TypeVar("P")
+
+
+class FSM(Generic[S, T, P]):
+    def __init__(
+        self,
+        init_state: S,
+        states: list[S],
+        inputs: list[T],
+        outputs: list[G],
+        transition: defaultdict[S, dict[T, S]],
+        emit: defaultdict[S, dict[T, G]],
+    ):
         self.init_state = init_state
         self.states = states
         self._current_state = init_state
@@ -17,62 +34,68 @@ class FSM:
         self.emit = emit
 
     @property
-    def inner_state(self):
+    def state(self) -> S:
         return self._current_state
 
-    @inner_state.setter
-    def inner_state(self, state):
-        self._current_state = state
+    def tick(self, input: T) -> Optional[G]:
+        output = None
+        if input in self.transition[self.state] and input in self.emit[self.state]:
+            output = self.emit[self.state][input]
+            state = self.transition[self.state][input]
+            self._current_state = state
+        return output
 
-    def reset(self):
-        self.inner_state = self.init_state
 
-    def tick(self, inp):
-        if (
-            inp in self.transition[self.inner_state]
-            and inp in self.emit[self.inner_state]
-        ):
-            out = self.emit[self.inner_state][inp]
-            state = self.transition[self.inner_state][inp]
-            self.inner_state = state
-        else:
-            out = None
-        return out
+def generate(states: list[S], inputs: list[T], outputs: list[G], seed=None) -> FSM:
+    """
+    Generate random finite state machine.
 
-    @classmethod
-    def generate(cls, states, inputs, outputs, seed=None):
-        def create_random(seq):
-            def rand(k=1):
-                return random.sample(seq, k=k)
+    :param states: list of unique hashable elements (int, str, ...)
+    :param inputs: list of unique hashable elements (int, str, ...)
+    :param outputs: list of unique hashable elements (int, str, ...)
+    :param seed: random seed
+    :return: random finite state machine
+    """
 
-            return rand
+    def create_random(seq):
+        def rand(k=1):
+            return random.sample(seq, k=k)
 
-        random_input = create_random(inputs)
-        random_output = create_random(outputs)
+        return rand
 
-        if seed:
-            random.seed(seed)
+    random_input = create_random(inputs)
+    random_output = create_random(outputs)
 
-        n = len(states)
-        m = random.randint(n - 1, 2 * n)
-        root, edges = random_graph(n, m)
-        init_state = states[root]
+    if seed:
+        random.seed(seed)
 
-        transition = defaultdict(dict)
-        emit = defaultdict(dict)
+    n = len(states)
+    m = random.randint(n - 1, min(2 * n, n ** 2))
+    root, edges = random_graph(n, m)
+    init_state = states[root]
 
-        for i, frm in enumerate(states):
-            frm_inputs = random_input(n)
-            frm_outputs = random_output(n)
-            for j, to in enumerate(states):
-                if edges[n * i + j]:
-                    transition[frm][frm_inputs[j]] = to
-                    emit[frm][frm_inputs[j]] = frm_outputs[j]
+    transition: defaultdict[S, dict[T, S]] = defaultdict(dict)
+    emit: defaultdict[S, dict[T, G]] = defaultdict(dict)
 
-        return cls(init_state, states, inputs, outputs, transition, emit)
+    for i, frm in enumerate(states):
+        frm_inputs = random_input(n)
+        frm_outputs = random_output(n)
+        for j, to in enumerate(states):
+            if edges[n * i + j]:
+                transition[frm][frm_inputs[j]] = to
+                emit[frm][frm_inputs[j]] = frm_outputs[j]
+
+    return FSM(init_state, states, inputs, outputs, transition, emit)
 
 
 def fsm2graph(fsm: FSM) -> Digraph:
+    """
+    Transform finite state machine to directer graph for next visualization
+
+    :param fsm: finite state machine
+    :return: directed graph that represent finite state machine
+    """
+
     def hash_state(state):
         return hashlib.md5(state.encode()).hexdigest()
 
@@ -86,8 +109,11 @@ def fsm2graph(fsm: FSM) -> Digraph:
         )
 
     for frm in fsm.states:
-        for inp in fsm.transition[frm]:
-            to = fsm.transition[frm][inp]
-            out = fsm.emit[frm][inp]
-            dot.edge(f"{hash_state(frm)}", f"{hash_state(to)}", label=f"{inp}/{out}")
+        for input in fsm.transition[frm]:
+            to = fsm.transition[frm][input]
+            output = fsm.emit[frm][input]
+            dot.edge(
+                f"{hash_state(frm)}", f"{hash_state(to)}", label=f"{input}/{output}"
+            )
+
     return dot
