@@ -1,20 +1,16 @@
 import argparse
 import importlib.util
-import io
 import sys
-import ast
-from contextlib import redirect_stdout
 from functools import partial
 
 from hypothesis import strategies as st, settings
+from hypothesis.reporting import reporter
 from hypothesis.stateful import (
     RuleBasedStateMachine,
     Bundle,
     rule,
     run_state_machine_as_test,
-    initialize,
 )
-from hypothesis.reporting import reporter
 
 from fsmgenerator import generate
 
