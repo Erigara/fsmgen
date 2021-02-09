@@ -1,3 +1,4 @@
+import argparse
 import hashlib
 import random
 from collections import defaultdict
@@ -119,3 +120,36 @@ def fsm2graph(fsm: FiniteStateMachine) -> Digraph:
             )
 
     return dot
+
+
+def parser():
+    parser = argparse.ArgumentParser(description="Generate finite state machine")
+    parser.add_argument(
+        "--directory",
+        type=str,
+        metavar="directory",
+        nargs="?",
+        default=".",
+        help="directory where collect results, by default put in current directory",
+    )
+    parser.add_argument(
+        "seeds",
+        type=str,
+        metavar="seed",
+        nargs="+",
+        help="random seed used to generate fsm",
+    )
+    return parser
+
+
+if __name__ == "__main__":
+    args = parser().parse_args()
+
+    states = ["A", "B", "C", "D"]
+    inputs = [0, 1, 2, 3]
+    outputs = [0, 1, 2, 3]
+
+    for seed in args.seeds:
+        machine = generate(states, inputs, outputs, seed)
+        dot = fsm2graph(machine)
+        dot.render(seed, directory=args.directory, cleanup=True, format="png")

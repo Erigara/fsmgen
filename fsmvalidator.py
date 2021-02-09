@@ -1,10 +1,9 @@
 import argparse
 import importlib.util
-import sys
 from functools import partial
 
 from hypothesis import strategies as st, settings
-from hypothesis.reporting import reporter
+from hypothesis.reporting import reporter, report
 from hypothesis.stateful import (
     RuleBasedStateMachine,
     Bundle,
@@ -73,6 +72,15 @@ def parser():
     return parser
 
 
+def custom_reporter(value):
+    """
+    Custom reporter used to slightly modify hypothesis output
+    """
+    textified = f"{value}".replace("state", "machine")
+    if "teardown" not in textified and "check" not in textified:
+        print(textified)
+
+
 if __name__ == "__main__":
     args = parser().parse_args(["shanin1000@yandex.ru", "concrete_fsm.py"])
 
@@ -80,10 +88,7 @@ if __name__ == "__main__":
     inputs = [0, 1, 2, 3]
     outputs = [0, 1, 2, 3]
 
-    def report(value):
-        print(f"{value}")
-
-    with reporter.with_value(report):
+    with reporter.with_value(custom_reporter):
         try:
             run_state_machine_as_test(
                 lambda: state_machine_factory(
@@ -96,8 +101,7 @@ if __name__ == "__main__":
                 settings=settings(max_examples=1000),
             )
         except AssertionError as e:
-            print(e, file=sys.stderr)
-            print(
+            report(e)
+            report(
                 "Implementation contains errors, correct them and try again!",
-                file=sys.stderr,
             )
