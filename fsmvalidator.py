@@ -11,6 +11,7 @@ from hypothesis.stateful import (
     run_state_machine_as_test,
 )
 
+import config
 from fsmgenerator import generate
 
 
@@ -82,11 +83,7 @@ def custom_reporter(value):
 
 
 if __name__ == "__main__":
-    args = parser().parse_args(["shanin1000@yandex.ru", "concrete_fsm.py"])
-
-    states = ["A", "B", "C", "D"]
-    inputs = [0, 1, 2, 3]
-    outputs = [0, 1, 2, 3]
+    args = parser().parse_args()
 
     with reporter.with_value(custom_reporter):
         try:
@@ -94,9 +91,9 @@ if __name__ == "__main__":
                 lambda: state_machine_factory(
                     args.path,
                     args.seed,
-                    states,
-                    inputs,
-                    outputs,
+                    config.states,
+                    config.inputs,
+                    config.outputs,
                 ),
                 settings=settings(max_examples=1000),
             )

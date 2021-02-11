@@ -7,6 +7,7 @@ from typing import TypeVar, Optional, Generic
 
 from graphviz import Digraph
 
+import config
 from random_graph import random_graph
 
 
@@ -145,11 +146,7 @@ def parser():
 if __name__ == "__main__":
     args = parser().parse_args()
 
-    states = ["A", "B", "C", "D"]
-    inputs = [0, 1, 2, 3]
-    outputs = [0, 1, 2, 3]
-
     for seed in args.seeds:
-        machine = generate(states, inputs, outputs, seed)
+        machine = generate(config.states, config.inputs, config.outputs, seed)
         dot = fsm2graph(machine)
         dot.render(seed, directory=args.directory, cleanup=True, format="png")
