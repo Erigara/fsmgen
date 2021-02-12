@@ -32,7 +32,7 @@ if __name__ == "__main__":
     with doc.create(Section("Задача: реализуйте конечный автомат.", numbering=False)):
         for variant in sorted(Path("tasks").glob("*"), key=lambda path: int(path.stem)):
             with doc.create(Subsection(f"Вариант: {variant.stem}", numbering=False)):
-                with open("payload.txt") as payload:
+                with open("tasks/payload.txt") as payload:
                     for line in payload:
                         doc.append(line)
 
