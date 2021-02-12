@@ -2,8 +2,9 @@ import argparse
 import hashlib
 import random
 from collections import defaultdict
-from collections.abc import Callable
 from typing import TypeVar, Optional, Generic
+from hypothesis.reporting import reporter, report
+from heapq import heappop, heappush
 
 from graphviz import Digraph
 
@@ -18,6 +19,10 @@ P = TypeVar("P")
 
 
 class FiniteStateMachine(Generic[S, T, P]):
+    """
+    Reference finite state machine implementation.
+    """
+
     def __init__(
         self,
         init_state: S,
@@ -47,6 +52,9 @@ class FiniteStateMachine(Generic[S, T, P]):
             self._current_state = state
         return output
 
+    def reset(self):
+        self._current_state = self.init_state
+
 
 def generate(
     states: list[S], inputs: list[T], outputs: list[G], seed=None
@@ -74,7 +82,7 @@ def generate(
         random.seed(seed)
 
     n = len(states)
-    m = random.randint(n - 1, min(2 * n, n ** 2))
+    m = random.randint(int(1.5 * n), min(2 * n, n ** 2))
     root, edges = random_graph(n, m)
     init_state = states[root]
 
@@ -92,9 +100,39 @@ def generate(
     return FiniteStateMachine(init_state, states, inputs, outputs, transition, emit)
 
 
+def path_generator(fsm: FiniteStateMachine, max_path_length=10, seed=None):
+    """
+    Extract paths from finite state machines.
+
+    :param max_path_length: maximum path length
+    :param fsm: finite state machine
+    :return: path
+    """
+    if seed:
+        random.seed(seed)
+
+    queue = [(0, (fsm.init_state, []))]
+    while queue:
+        _, (state, path) = heappop(queue)
+        if len(path) == max_path_length or not fsm.transition[state]:
+            report("machine = FiniteStateMachine()")
+            for i, input in enumerate(path, start=1):
+                output = machine.tick(input)
+                input = f"'{input}'" if type(input) == str else input
+                output = f"'output'" if type(output) == str else output
+                report(f"v{i} = machine.tick(input={input}) #v{i} == {output}")
+            machine.reset()
+            yield
+        else:
+            for input in fsm.transition[state]:
+                next_state = fsm.transition[state][input]
+                priority = 10 ** len(path) + random.randint(0, 9)
+                heappush(queue, (priority, (next_state, [*path, input])))
+
+
 def fsm2graph(fsm: FiniteStateMachine) -> Digraph:
     """
-    Transform finite state machine to directer graph for next visualization
+    Transform finite state machine to directer graph for next visualization.
 
     :param fsm: finite state machine
     :return: directed graph that represent finite state machine
@@ -143,10 +181,26 @@ def parser():
     return parser
 
 
+def reporter_wrapper(file):
+    def reporter(value):
+        print(value, file=file)
+
+    return reporter
+
+
 if __name__ == "__main__":
     args = parser().parse_args()
 
     for seed in args.seeds:
         machine = generate(config.states, config.inputs, config.outputs, seed)
         dot = fsm2graph(machine)
-        dot.render(seed, directory=args.directory, cleanup=True, format="png")
+        dot.attr(rankdir="LR", size="8,5")
+        dot.render(
+            "fsm", directory=f"{args.directory}/{seed}", cleanup=True, format="png"
+        )
+        paths_num = 2
+        paths = path_generator(machine, max_path_length=5, seed=seed)
+        for i in range(paths_num):
+            with open(f"{args.directory}/{seed}/path{i}.txt", "w") as path:
+                with reporter.with_value(reporter_wrapper(path)):
+                    next(paths)
