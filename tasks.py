@@ -46,7 +46,7 @@ if __name__ == "__main__":
                     for path in variant.glob("path*.txt"):
                         doc.append(
                             Listing(
-                                arguments=Arguments(str(path), 0, 5),
+                                arguments=Arguments(str(path), 0, 10),
                             )
                         )
     doc.generate_pdf("tasks", clean_tex=False)
